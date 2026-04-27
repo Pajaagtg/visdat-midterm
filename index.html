@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eksplorasi Fitur Audio Spotify</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 20px auto;
+            max-width: 1000px;
+            background: #f7f9fc;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 0;
+        }
+        .subtitle {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            margin-top: 4px;
+        }
+        .upload-area {
+            text-align: center;
+            margin: 30px auto;
+            padding: 40px;
+            border: 2px dashed #aaa;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .upload-area:hover {
+            background: #f0f4ff;
+        }
+        .upload-area p {
+            margin: 0;
+            font-size: 16px;
+            color: #555;
+        }
+        #fileInput {
+            display: none;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .control-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        label {
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        select {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .tooltip {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px 14px;
+            pointer-events: none;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            max-width: 250px;
+        }
+        svg {
+            display: block;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .writeup {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 30px;
+            line-height: 1.6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .writeup h2 { margin-top: 0; }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            margin: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Eksplorasi Fitur Audio Spotify</h1>
+    <p class="subtitle">Pilih sumbu, filter genre – animasi transisi responsif</p>
+
+    <!-- Area upload CSV -->
+    <div id="uploadContainer">
+        <div class="upload-area" id="uploadArea">
+            <p>📂 Klik di sini atau drag & drop <strong>dataset.csv</strong></p>
+            <input type="file" id="fileInput" accept=".csv">
+        </div>
+    </div>
+
+    <!-- Kontrol visualisasi (disembunyikan dulu) -->
+    <div id="vizControls" style="display: none;">
+        <div class="controls">
+            <div class="control-group">
+                <label for="xAxis">Sumbu X:</label>
+                <select id="xAxis">
+                    <option value="danceability">Danceability</option>
+                    <option value="energy">Energy</option>
+                    <option value="valence">Valence</option>
+                    <option value="tempo">Tempo</option>
+                    <option value="loudness">Loudness</option>
+                    <option value="speechiness">Speechiness</option>
+                    <option value="acousticness">Acousticness</option>
+                    <option value="instrumentalness">Instrumentalness</option>
+                    <option value="liveness">Liveness</option>
+                    <option value="popularity" selected>Popularity</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="yAxis">Sumbu Y:</label>
+                <select id="yAxis">
+                    <option value="danceability" selected>Danceability</option>
+                    <option value="energy">Energy</option>
+                    <option value="valence">Valence</option>
+                    <option value="tempo">Tempo</option>
+                    <option value="loudness">Loudness</option>
+                    <option value="speechiness">Speechiness</option>
+                    <option value="acousticness">Acousticness</option>
+                    <option value="instrumentalness">Instrumentalness</option>
+                    <option value="liveness">Liveness</option>
+                    <option value="popularity">Popularity</option>
+                </select>
+            </div>
+            <div class="filter-group" id="genreCheckboxes">
+                <label>Genre:</label>
+            </div>
+        </div>
+        <div id="chart"></div>
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <div class="writeup">
+        <h2>📘 Rasional Desain & Proses Pengembangan</h2>
+        <p><strong>Pertanyaan utama:</strong> Bagaimana hubungan antara berbagai fitur audio (danceability, energy, valence, tempo, dll.) dengan popularitas lagu di berbagai genre? Apakah ada pola khas per genre?</p>
+        <p><strong>Visual encoding:</strong> Scatter plot menggunakan posisi horizontal dan vertikal untuk dua variabel kontinu. Warna (hue) digunakan untuk membedakan genre. Posisi adalah saluran paling akurat untuk data kuantitatif, sementara warna kategorikal membantu mengidentifikasi klaster genre.</p>
+        <p><strong>Interaksi:</strong>  
+            - <em>Dynamic queries</em>: checkbox genre memungkinkan pengguna menyaring data dan melihat perubahan pola secara langsung.  
+            - <em>Details-on-demand</em>: tooltip muncul saat hover, menampilkan judul lagu, artis, genre, dan nilai kedua sumbu.  
+            - Pemilihan sumbu dari dropdown memungkinkan eksplorasi berbagai pasangan variabel tanpa membuat banyak grafik.  
+        </p>
+        <p><strong>Animasi:</strong> Transisi D3 (durasi 750 ms) digunakan untuk memperbarui posisi titik, opasitas, dan radius saat filter atau sumbu berubah. Titik baru muncul dengan efek fade-in dan membesar, titik yang dihapus mengecil dan menghilang.</p>
+        <p><strong>Proses pengembangan:</strong> Dataset memiliki 114k baris, maka digunakan sampling acak 5000 titik untuk menjaga performa animasi tetap mulus. Waktu pengerjaan sekitar 10 jam.</p>
+        <p><strong>Sumber data:</strong> <a href="https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset" target="_blank">Spotify Tracks Dataset (Hugging Face)</a>.</p>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // === UPLOAD CSV HANDLER ===
+        const uploadArea = document.getElementById("uploadArea");
+        const fileInput = document.getElementById("fileInput");
+        const uploadContainer = document.getElementById("uploadContainer");
+        const vizControls = document.getElementById("vizControls");
+
+        uploadArea.addEventListener("click", () => fileInput.click());
+        uploadArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadArea.style.background = "#e0e8ff";
+        });
+        uploadArea.addEventListener("dragleave", () => {
+            uploadArea.style.background = "white";
+        });
+        uploadArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadArea.style.background = "white";
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+        fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        function processFile(file) {
+            if (!file.name.endsWith(".csv")) {
+                alert("Harap pilih file CSV.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const parsed = d3.csvParse(text);
+                // Lanjut ke visualisasi
+                uploadContainer.style.display = "none";
+                vizControls.style.display = "block";
+                buildVisualization(parsed);
+            };
+            reader.readAsText(file);
+        }
+
+        // === VISUALISASI ===
+        function buildVisualization(rawData) {
+            // Parse numerik
+            rawData.forEach(d => {
+                d.popularity = +d.popularity;
+                d.danceability = +d.danceability;
+                d.energy = +d.energy;
+                d.valence = +d.valence;
+                d.tempo = +d.tempo;
+                d.loudness = +d.loudness;
+                d.speechiness = +d.speechiness;
+                d.acousticness = +d.acousticness;
+                d.instrumentalness = +d.instrumentalness;
+                d.liveness = +d.liveness;
+                d.track_genre = d.track_genre || "Unknown";
+            });
+
+            // Genre teratas
+            const genreCount = d3.rollup(rawData, v => v.length, d => d.track_genre);
+            const topGenres = Array.from(genreCount.entries())
+                .sort((a, b) => d3.descending(a[1], b[1]))
+                .slice(0, 12)
+                .map(d => d[0]);
+
+            // Sampling 5000
+            const sampled = d3.shuffle(rawData.slice()).slice(0, 5000);
+
+            // Checkbox
+            const genreDiv = d3.select("#genreCheckboxes");
+            topGenres.forEach(genre => {
+                const label = genreDiv.append("label");
+                label.append("input")
+                    .attr("type", "checkbox")
+                    .attr("class", "genre-filter")
+                    .attr("value", genre)
+                    .property("checked", true);
+                label.append("span").text(genre);
+            });
+
+            // SVG setup
+            const margin = {top: 30, right: 30, bottom: 50, left: 60};
+            const width = 900 - margin.left - margin.right;
+            const height = 520 - margin.top - margin.bottom;
+
+            const svg = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const xScale = d3.scaleLinear().range([0, width]);
+            const yScale = d3.scaleLinear().range([height, 0]);
+
+            const colorScale = d3.scaleOrdinal()
+                .domain(topGenres)
+                .range(d3.schemeTableau10);
+
+            const xAxis = svg.append("g").attr("class", "x-axis").attr("transform", `translate(0,${height})`);
+            const yAxis = svg.append("g").attr("class", "y-axis");
+
+            const xLabel = svg.append("text")
+                .attr("class", "x-label")
+                .attr("text-anchor", "middle")
+                .attr("x", width/2)
+                .attr("y", height + 40)
+                .style("font-size","14px");
+            const yLabel = svg.append("text")
+                .attr("class", "y-label")
+                .attr("text-anchor", "middle")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -50)
+                .attr("x", -height/2)
+                .style("font-size","14px");
+
+            const tooltip = d3.select("#tooltip");
+
+            const attributeLabels = {
+                popularity: "Popularity",
+                danceability: "Danceability",
+                energy: "Energy",
+                valence: "Valence",
+                tempo: "Tempo",
+                loudness: "Loudness",
+                speechiness: "Speechiness",
+                acousticness: "Acousticness",
+                instrumentalness: "Instrumentalness",
+                liveness: "Liveness"
+            };
+
+            function update() {
+                const xAttr = d3.select("#xAxis").property("value");
+                const yAttr = d3.select("#yAxis").property("value");
+
+                const selectedGenres = [];
+                d3.selectAll(".genre-filter").each(function() {
+                    if (this.checked) selectedGenres.push(this.value);
+                });
+
+                const filteredData = sampled.filter(d => selectedGenres.includes(d.track_genre));
+
+                xScale.domain(d3.extent(sampled, d => d[xAttr])).nice();
+                yScale.domain(d3.extent(sampled, d => d[yAttr])).nice();
+
+                xAxis.transition().duration(750).call(d3.axisBottom(xScale));
+                yAxis.transition().duration(750).call(d3.axisLeft(yScale));
+
+                xLabel.text(attributeLabels[xAttr]);
+                yLabel.text(attributeLabels[yAttr]);
+
+                const circles = svg.selectAll("circle")
+                    .data(filteredData, d => d.track_id);
+
+                circles.exit()
+                    .transition().duration(500)
+                    .attr("r", 0)
+                    .style("opacity", 0)
+                    .remove();
+
+                circles.transition().duration(750)
+                    .attr("cx", d => xScale(d[xAttr]))
+                    .attr("cy", d => yScale(d[yAttr]))
+                    .style("fill", d => {
+                        if (topGenres.includes(d.track_genre)) return colorScale(d.track_genre);
+                        else return "#aaa";
+                    });
+
+                const enterCircles = circles.enter()
+                    .append("circle")
+                    .attr("r", 0)
+                    .style("opacity", 0)
+                    .attr("cx", d => xScale(d[xAttr]))
+                    .attr("cy", d => yScale(d[yAttr]))
+                    .style("fill", d => {
+                        if (topGenres.includes(d.track_genre)) return colorScale(d.track_genre);
+                        else return "#aaa";
+                    })
+                    .style("stroke", "#333")
+                    .style("stroke-width", 0.8);
+
+                enterCircles.transition().duration(750)
+                    .attr("r", 4)
+                    .style("opacity", 0.7);
+
+                const allCircles = svg.selectAll("circle");
+                allCircles.on("mouseover", function(event, d) {
+                        d3.select(this).transition().duration(200).attr("r", 6).style("opacity", 1);
+                        tooltip.style("opacity", 1)
+                            .html(`<strong>${d.track_name}</strong><br>Artist: ${d.artists}<br>Genre: ${d.track_genre}<br>${attributeLabels[xAttr]}: ${d[xAttr]}<br>${attributeLabels[yAttr]}: ${d[yAttr]}`)
+                            .style("left", (event.pageX + 15) + "px")
+                            .style("top", (event.pageY - 30) + "px");
+                    })
+                    .on("mousemove", function(event) {
+                        tooltip.style("left", (event.pageX + 15) + "px")
+                            .style("top", (event.pageY - 30) + "px");
+                    })
+                    .on("mouseout", function() {
+                        d3.select(this).transition().duration(200).attr("r", 4).style("opacity", 0.7);
+                        tooltip.style("opacity", 0);
+                    });
+            }
+
+            update();
+
+            d3.select("#xAxis").on("change", update);
+            d3.select("#yAxis").on("change", update);
+            d3.selectAll(".genre-filter").on("change", update);
+
+            // Legend
+            const legend = svg.append("g")
+                .attr("transform", `translate(${width - 100}, 10)`);
+            topGenres.forEach((genre, i) => {
+                const row = legend.append("g").attr("transform", `translate(0, ${i*20})`);
+                row.append("circle").attr("r", 5).attr("fill", colorScale(genre)).attr("stroke", "#333").attr("stroke-width", 0.5);
+                row.append("text").attr("x", 12).attr("y", 4).text(genre).style("font-size","11px");
+            });
+        }
+    </script>
+</body>
+</html>
